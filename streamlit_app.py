@@ -1,45 +1,50 @@
 import streamlit as st
-from transformers import MBartForConditionalGeneration, MBart50TokenizerFast, pipeline, AutoTokenizer
+from transformers import pipeline
 
-article_en = "Once the examples are prepared in this format, it can be trained as any other sequence-to-sequence model."
-article_ka = "После подготовки примеров в этом формате их можно обучать так же, как и любую другую модель «последовательность-последовательность»."
-
-model_name = "facebook/mbart-large-50-many-to-many-mmt"
+text = "Этот курс был создан в партнерстве с Hugging Face."
 
 
-@st.cache(allow_output_mutation=True, suppress_st_warning=True)
-def download_model():
-    model = MBartForConditionalGeneration.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    return model, tokenizer
+def translation_ru_en(_input_text):
+    translator = pipeline("translation", model="facebook/nllb-200-distilled-600M", src_lang='rus_Cyrl',
+                          tgt_lang='eng_Latn')
+    translation = translator(_input_text)
+    return translation
 
 
-st.title('Hindi to English Translater')
-text = st.text_area("Enter Text:", value='', height=None, max_chars=None, key=None)
-model, tokenizer = download_model()
+def translation_en_ru(_input_text):
+    translator = pipeline("translation", model="facebook/nllb-200-distilled-600M", src_lang='eng_Latn',
+                          tgt_lang='rus_Cyrl')
+    translation = translator(_input_text)
+    return translation
 
-if st.button('Translate to English'):
-    if text == '':
-        st.write('Please enter Hindi text for translation')
+
+def translation_ru_fr(_input_text):
+    translator = pipeline("translation", model="facebook/nllb-200-distilled-600M", src_lang='rus_Cyrl',
+                          tgt_lang='fra_Latn')
+    translation = translator(_input_text)
+    return translation
+
+
+st.title("Переводчик текста")
+
+selected_task = st.sidebar.selectbox("Выбрать язык: ",
+                                     ["Русский на Английский", "Английский на Русский", "Русский на Французкий"])
+
+input_text = st.text_area("Введите текст:")
+
+if st.button("Перевести"):
+    if selected_task == "Русский на Английский" and input_text:
+        st.subheader("Перевод:")
+        result = translation_ru_en(input_text)
+        st.write('', str(result).strip("[{'translation_text': ']}\'"))
+    elif selected_task == "Английский на Русский" and input_text:
+        st.subheader("Перевод")
+        result = translation_en_ru(input_text)
+        st.write('', str(result).strip("[{'translation_text': ']}\'"))
+    elif selected_task == "Русский на Французкий" and input_text:
+        st.subheader("Перевод:")
+        result = translation_ru_fr(input_text)
+        st.write('', str(result).strip("[{'translation_text': ']}\'"))
     else:
-        # Перевести Английский на Японский
-        tokenizer.src_lang = "en_XX"  #@param {type:"string"}
-        lang1 = "ja_XX"  #@param {type:"string"}
-        encoded_hi = tokenizer(article_en, return_tensors="pt")
-        generated_tokens = model.generate(**encoded_hi,
-                                          forced_bos_token_id=tokenizer.lang_code_to_id[lang1])
-        out = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-        st.write('', str(out).strip('][\''))
-        # => サンプルがこの形式で準備されると、他のシーケンスからシーケンスモデルとして訓練することができます。
+        st.info("Введите текст и выберите задачу на боковой панели.")
 
-else:
-    pass
-
-# # Перевести Русский на Казахский язык
-# tokenizer.src_lang = "ru_RU"  #@param {type:"string"}
-# lang2 = "kk_KZ"  #@param {type:"string"}
-# encoded_ar = tokenizer(article_ka, return_tensors="pt")
-# generated_tokens = model.generate(**encoded_ar,
-#                                   forced_bos_token_id=tokenizer.lang_code_to_id[lang2])
-# st.write(tokenizer.batch_decode(generated_tokens, skip_special_tokens=True))
-# # => Үздіктер preparedша, олар басқа модельді «шеңдік-шеңдік» деп үйретуге болады.
