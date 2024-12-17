@@ -23,7 +23,6 @@ if st.button("Перевести"):
     if selected_task == "Русский на Английский" and input_text:
         result = translate(input_text, 'rus_Cyrl', 'eng_Latn')
         st.write('', str(result).strip("[{'translation_text': ']}\'"))
-        st.write(str(result))
     elif selected_task == "Английский на Русский" and input_text:
         result = translate(input_text, 'eng_Latn', 'rus_Cyrl')
         st.write('', str(result).strip("[{'translation_text': ']}\'"))
